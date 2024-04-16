@@ -164,7 +164,7 @@ namespace Trainreservationsys
                             DeleteUser(connection);
                             break;
                         case "5":
-                            ViewTrain(connection);
+                            ViewTrains(connection);
                             break;
                         case "6":
                             isAdmin = false; 
@@ -676,6 +676,48 @@ namespace Trainreservationsys
                 }
             }
         }
+        static void ViewTrains(SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand command = new SqlCommand("ViewTrains", connection);
+                command.CommandType = CommandType.StoredProcedure;
+
+                DataTable dataTable = new DataTable();
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter(command))
+                {
+                    dataAdapter.Fill(dataTable);
+                }
+
+                if (dataTable.Rows.Count == 0)
+                {
+                    Console.WriteLine("No records found in the Train table.");
+                    return;
+                }
+
+                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                Console.WriteLine("{0,-10} {1,-20} {2,-20} {3,-20} {4,-15} {5,-10} {6,-10} {7,-10} {8,-10} {9,-10}", "Train ID", "Train Name", "Departure Station", "Arrival Station", "First Class Fare", "Second Class Fare", "Sleeper Class Fare", "Total Berths", "Available Berths", "Status");
+                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    Console.WriteLine("{0,-10} {1,-20} {2,-20} {3,-20} {4,-15} {5,-10} {6,-10} {7,-10} {8,-10} {9,-10}",
+                        row["trainId"], row["trainName"], row["departurestation"], row["arrivalstation"],
+                        row["firstclassfare"], row["secondclassfare"], row["sleeperclassfare"],
+                        row["totalberths"], row["availableberths"], row["status"]);
+                }
+
+                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error viewing trains: " + ex.Message);
+            }
+            Console.Read();
+        }
+
 
 
         static void ViewTrain(SqlConnection connection)

@@ -307,16 +307,16 @@ BEGIN
     SELECT
         bt.BookingId,
         bt.TrainId,
-        bt.TrainName,
+        bt.Trainame,
         bt.UserId,
         bt.TotalFare,
         bt.Class,
         bt.BookingDate,
-        bt.NumberOfTickets,
-        btp.PassengerName
+        bt.NumberOfTickets
+       -- btp.PassengerName
     FROM
         BookedTickets bt
-        JOIN BookedTicketPassengers btp ON bt.BookingId = btp.BookingId
+        JOIN BookedTickets btp ON bt.BookingId = btp.BookingId
     WHERE
         bt.BookingId = @BookingId;
 END;
@@ -379,6 +379,14 @@ BEGIN
     ORDER BY BookingId DESC; 
 END;
 
+
+CREATE OR ALTER PROCEDURE ViewTrains
+AS
+BEGIN
+    SELECT * FROM trains 
+END;
+exec proc Viewtrains
+
 ====================================================================================================================================================
 select * from trains
 select * from admins
@@ -389,3 +397,4 @@ select * from cancelticket
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+delete from bookedtickets where bookingid=140
