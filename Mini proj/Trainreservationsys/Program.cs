@@ -54,7 +54,7 @@ namespace Trainreservationsys
                                 Console.ForegroundColor = ConsoleColor.Blue;
                             }
                             Console.WriteLine(frame);
-                            Thread.Sleep(500); // Adjust the delay here
+                            Thread.Sleep(500); 
                         }
                     }
 
@@ -78,7 +78,7 @@ namespace Trainreservationsys
                             break;
                         default:
                             Console.WriteLine("Invalid choice. Please try again.");
-                            Console.ReadKey(); // Wait for key press
+                            Console.ReadKey(); 
                             Main(args);
                             break;
                     }
@@ -127,7 +127,7 @@ namespace Trainreservationsys
                     }
                 }
 
-                Console.ReadKey(); // Wait for key press
+                Console.ReadKey(); 
             }
 
             static void AdminOptionsLoop(SqlConnection connection)
@@ -167,7 +167,7 @@ namespace Trainreservationsys
                             ViewTrain(connection);
                             break;
                         case "6":
-                            isAdmin = false; // Exit loop
+                            isAdmin = false; 
                             Console.WriteLine("Logged out.");
                             break;
                         default:
@@ -175,7 +175,7 @@ namespace Trainreservationsys
                             break;
                     }
 
-                    Console.ReadLine(); // Wait for key press
+                    Console.ReadLine();
                 }
             }
 
@@ -239,7 +239,7 @@ namespace Trainreservationsys
                     Console.WriteLine($"Error adding train: {ex.Message}");
                 }
 
-                Console.ReadLine(); // Wait for key press
+                Console.ReadLine(); 
             }
 
 
@@ -273,7 +273,7 @@ namespace Trainreservationsys
                     Console.WriteLine($"Error updating train: {ex.Message}");
                 }
 
-                Console.ReadKey(); // Wait for key press
+                Console.ReadKey(); 
             }
 
             static void DeleteTrain(SqlConnection connection)
@@ -297,7 +297,7 @@ namespace Trainreservationsys
                     Console.WriteLine($"Error deleting train: {ex.Message}");
                 }
 
-                Console.ReadLine(); // Wait for key press
+                Console.ReadLine();
             }
 
             static void DeleteUser(SqlConnection connection)
@@ -321,13 +321,13 @@ namespace Trainreservationsys
                     Console.WriteLine($"Error deleting user: {ex.Message}");
                 }
 
-                Console.ReadLine(); // Wait for key press
+                Console.ReadLine(); 
             }
 
             static void UserLogin(SqlConnection connection)
             {
                 bool continueLogin = true;
-                bool newUserCreated = false; // Flag to indicate if a new user was created
+                bool newUserCreated = false; 
                 while (continueLogin)
                 {
                     Console.Clear();
@@ -380,7 +380,6 @@ namespace Trainreservationsys
                         }
                         else if (existingUserInput == "N")
                         {
-                            // Create new account
                             Console.Write("Enter User Username: ");
                             string newUsername = Console.ReadLine()?.Trim();
                             Console.Write("Enter User Password: ");
@@ -395,8 +394,7 @@ namespace Trainreservationsys
                                     command.Parameters.AddWithValue("@Password", newPassword);
                                     command.ExecuteNonQuery();
                                     Console.WriteLine("User account created successfully.");
-                                    newUserCreated = true; // Set the flag to true
-                                }
+                                    newUserCreated = true;                                 }
 
                             }
                             catch (Exception ex)
@@ -411,9 +409,8 @@ namespace Trainreservationsys
                     }
                     else
                     {
-                        // Skip the existing user check and go directly to UserOptions
                         while (UserOptions(connection)) ;
-                        newUserCreated = false; // Reset the flag
+                        newUserCreated = false; 
                     }
 
                     Console.Write("Do you want to continue? (Y/N): ");
@@ -472,7 +469,6 @@ namespace Trainreservationsys
                     return;
                 }
 
-                // Check if the train ID exists in the Trains table
                 string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid}";
                 using (SqlCommand checkCommand = new SqlCommand(query, connection))
                 {
@@ -488,7 +484,6 @@ namespace Trainreservationsys
                 Console.Write("Enter Train Name: ");
                 string trainName = Console.ReadLine();
 
-                // Check if the train name exists in the Trains table
                 query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName";
                 using (SqlCommand checkNameCommand = new SqlCommand(query, connection))
                 {
@@ -541,7 +536,6 @@ namespace Trainreservationsys
 
                         command.ExecuteNonQuery();
 
-                        // Retrieve the BookingId from the output parameter
                         int bookingId = (int)bookingIdParameter.Value;
                         Console.WriteLine("Booking ID: " + bookingId);
                         Console.WriteLine("Ticket booked successfully!");
@@ -634,7 +628,7 @@ namespace Trainreservationsys
                                 currentYear = currentDate.Year;
                                 break;
                             case ConsoleKey.Enter:
-                                return currentDate; // Exit the loop and return the selected date
+                                return currentDate; 
                         }
                     }
                 }

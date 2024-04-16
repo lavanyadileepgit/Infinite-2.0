@@ -139,7 +139,6 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        -- Update the train status to 'inactive' instead of deleting
         UPDATE Trains
         SET Status = 'inactive'
         WHERE TrainId = @TrainId;
@@ -164,7 +163,6 @@ BEGIN
     DECLARE @UserType VARCHAR(10);
     DECLARE @UserId INT;
 
-    -- Check if the user exists in the Users table
     SELECT @UserId = UserId
     FROM Users
     WHERE Username = @Username AND Password = @Password;
@@ -190,28 +188,23 @@ BEGIN
     DECLARE @TrainId INT;
     DECLARE @NumberOfTickets INT;
 
-    -- Get TrainId and NumberOfTickets for the canceled booking
     SELECT TOP 1 @TrainId = TrainId, @NumberOfTickets = NumberOfTickets
     FROM BookedTickets
     WHERE BookingId = @BookingId AND UserId = @UserId;
 
-    -- Check if the BookingId and UserId match
     IF @@ROWCOUNT = 0
     BEGIN
         PRINT 'BookingId and UserId do not match.';
         RETURN;
     END;
 
-    -- Delete the booking
     DELETE FROM BookedTickets
     WHERE BookingId = @BookingId AND UserId = @UserId;
 
-    -- Update available berths in the Trains table
     UPDATE Trains
     SET AvailableBerths = AvailableBerths + @NumberOfTickets
     WHERE TrainId = @TrainId;
 
-    -- Record the cancellation in the cancelticket table
     INSERT INTO cancelticket --(BookingId, UserId, TrainId, Refund_Amt, no_of_tickets)
     VALUES (@BookingId, @UserId, @TrainId, (@NumberOfTickets * 100), @NumberOfTickets);
 
@@ -233,7 +226,6 @@ BEGIN
     DECLARE @UserExists INT;
     DECLARE @UserLoggedInId INT = 1; -- Example value, replace with actual logged-in user ID
 
-    -- Check if the train with the entered TrainId and TrainName exists
     SELECT @TrainExists = COUNT(*)
     FROM Trains
     WHERE TrainId = @TrainId AND TrainName = @TrainName;
@@ -244,7 +236,6 @@ BEGIN
         RETURN;
     END;
 
-    -- Check if the user with the entered UserId exists
     SELECT @UserExists = COUNT(*)
     FROM Users
     WHERE UserId = @UserId;
@@ -264,7 +255,6 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        -- Calculate the total fare based on the TrainId and Class
         DECLARE @TotalFare DECIMAL(10, 2);
         SELECT @TotalFare =
             CASE
@@ -284,16 +274,13 @@ BEGIN
 
         SET @TotalFare = @TotalFare * @NumberOfTickets;
 
-        -- Insert into BookedTickets table
         INSERT INTO BookedTickets 
         VALUES (@TrainId, @TrainName, @UserId, @TotalFare, @Class, @BookingDate, @NumberOfTickets);
 
-        -- Update available berths in the Trains table
         UPDATE Trains
         SET availableberths = availableberths - @NumberOfTickets
         WHERE TrainId = @TrainId;
 
-        -- Get the newly inserted BookingId
         SELECT @BookingId = SCOPE_IDENTITY();
 
         COMMIT TRANSACTION;
@@ -307,7 +294,6 @@ END;
 
 
 
-exec booktraintickets 10001,1,'cheran express','2024-08-08',4,'sleeper class'
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
 CREATE PROCEDURE AdminLoginProcedure
@@ -319,7 +305,6 @@ BEGIN
 
     DECLARE @UserType VARCHAR(10);
 
-    -- Check if the user exists in the Admins table
     IF EXISTS (SELECT 1 FROM Admins WHERE Username = @Username AND Password = @Password)
     BEGIN
         SET @UserType = 'Admin';
@@ -362,9 +347,8 @@ BEGIN
     SELECT TOP 1 *
     FROM BookedTickets
     WHERE TrainId = @TrainId
-    ORDER BY BookingId DESC; -- Selects the most recent booking for the specified TrainId
+    ORDER BY BookingId DESC; 
 END;
---------------------------------------------------------------------------------------------------------------------------
 
 ====================================================================================================================================================
 select * from trains
