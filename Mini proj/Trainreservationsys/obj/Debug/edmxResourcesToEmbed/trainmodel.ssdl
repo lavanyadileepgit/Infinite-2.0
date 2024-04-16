@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="train_reservationModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityType Name="Admins">
+    <Key>
+      <PropertyRef Name="AdminId" />
+    </Key>
+    <Property Name="AdminId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Username" Type="varchar" MaxLength="50" Nullable="false" />
+    <Property Name="Password" Type="varchar" MaxLength="50" Nullable="false" />
+  </EntityType>
+  <!--Errors Found During Generation:
+warning 6002: The table/view 'train_reservation.dbo.BookedTickets' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+  <EntityType Name="BookedTickets">
+    <Key>
+      <PropertyRef Name="BookingId" />
+      <PropertyRef Name="BookingDate" />
+      <PropertyRef Name="NumberOfTickets" />
+    </Key>
+    <Property Name="BookingId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="TrainId" Type="int" />
+    <Property Name="trainame" Type="varchar" MaxLength="30" />
+    <Property Name="UserId" Type="int" />
+    <Property Name="totalfare" Type="int" />
+    <Property Name="class" Type="varchar" MaxLength="20" />
+    <Property Name="BookingDate" Type="datetime" Nullable="false" />
+    <Property Name="NumberOfTickets" Type="int" Nullable="false" />
+  </EntityType>
+  <EntityType Name="cancelticket">
+    <Key>
+      <PropertyRef Name="cancelid" />
+    </Key>
+    <Property Name="cancelid" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="bookid" Type="int" />
+    <Property Name="userid" Type="int" />
+    <Property Name="trainno" Type="int" />
+    <Property Name="refund_amt" Type="int" />
+    <Property Name="no_of_tickets" Type="int" />
+  </EntityType>
+  <EntityType Name="Trains">
+    <Key>
+      <PropertyRef Name="trainid" />
+    </Key>
+    <Property Name="trainid" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="TrainName" Type="varchar" MaxLength="255" />
+    <Property Name="DepartureStation" Type="varchar" MaxLength="255" />
+    <Property Name="ArrivalStation" Type="varchar" MaxLength="255" />
+    <Property Name="FirstClassFare" Type="decimal" Precision="10" Scale="2" />
+    <Property Name="SecondClassFare" Type="decimal" Precision="10" Scale="2" />
+    <Property Name="SleeperClassFare" Type="decimal" Precision="10" Scale="2" />
+    <Property Name="totalberths" Type="int" />
+    <Property Name="availableberths" Type="int" />
+    <Property Name="Status" Type="varchar" MaxLength="50" />
+  </EntityType>
+  <!--Errors Found During Generation:
+warning 6002: The table/view 'train_reservation.dbo.Users' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+  <EntityType Name="Users">
+    <Key>
+      <PropertyRef Name="UserId" />
+      <PropertyRef Name="Username" />
+      <PropertyRef Name="Password" />
+    </Key>
+    <Property Name="UserId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="Username" Type="varchar" MaxLength="50" Nullable="false" />
+    <Property Name="Password" Type="varchar" MaxLength="50" Nullable="false" />
+  </EntityType>
+  <Association Name="FK__BookedTic__Train__5812160E">
+    <End Role="Trains" Type="Self.Trains" Multiplicity="0..1" />
+    <End Role="BookedTickets" Type="Self.BookedTickets" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Trains">
+        <PropertyRef Name="trainid" />
+      </Principal>
+      <Dependent Role="BookedTickets">
+        <PropertyRef Name="TrainId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__canceltic__train__5AEE82B9">
+    <End Role="Trains" Type="Self.Trains" Multiplicity="0..1" />
+    <End Role="cancelticket" Type="Self.cancelticket" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Trains">
+        <PropertyRef Name="trainid" />
+      </Principal>
+      <Dependent Role="cancelticket">
+        <PropertyRef Name="trainno" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Function Name="AddTrainBasedOnStatus" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainName" Type="varchar" Mode="In" />
+    <Parameter Name="Departurestation" Type="varchar" Mode="In" />
+    <Parameter Name="arrivalstation" Type="varchar" Mode="In" />
+    <Parameter Name="firstclass" Type="varchar" Mode="In" />
+    <Parameter Name="secondclass" Type="varchar" Mode="In" />
+    <Parameter Name="sleeperclass" Type="varchar" Mode="In" />
+    <Parameter Name="totalberths" Type="int" Mode="In" />
+    <Parameter Name="availableberths" Type="int" Mode="In" />
+    <Parameter Name="TStatus" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="AddUser" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="Username" Type="varchar" Mode="In" />
+    <Parameter Name="Password" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="AdminLoginProcedure" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="Username" Type="varchar" Mode="In" />
+    <Parameter Name="Password" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="BookTicket" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+    <Parameter Name="UserId" Type="int" Mode="In" />
+    <Parameter Name="trainname" Type="varchar" Mode="In" />
+    <Parameter Name="BookingDate" Type="datetime" Mode="In" />
+    <Parameter Name="NumberOfTickets" Type="int" Mode="In" />
+    <Parameter Name="Class" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="BookTickets" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+    <Parameter Name="UserId" Type="int" Mode="In" />
+    <Parameter Name="trainname" Type="varchar" Mode="In" />
+    <Parameter Name="BookingDate" Type="datetime" Mode="In" />
+    <Parameter Name="NumberOfTickets" Type="int" Mode="In" />
+    <Parameter Name="Class" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="BookTrainTicket" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+    <Parameter Name="Class" Type="varchar" Mode="In" />
+    <Parameter Name="Tname" Type="varchar" Mode="In" />
+    <Parameter Name="UserId" Type="int" Mode="In" />
+    <Parameter Name="BookingDate" Type="datetime" Mode="In" />
+    <Parameter Name="NumberOfTickets" Type="int" Mode="In" />
+  </Function>
+  <Function Name="BookTrainTickets" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+    <Parameter Name="UserId" Type="int" Mode="In" />
+    <Parameter Name="TrainName" Type="varchar" Mode="In" />
+    <Parameter Name="BookingDate" Type="datetime" Mode="In" />
+    <Parameter Name="NumberOfTickets" Type="int" Mode="In" />
+    <Parameter Name="Class" Type="varchar" Mode="In" />
+    <Parameter Name="BookingId" Type="int" Mode="InOut" />
+  </Function>
+  <Function Name="Cancel" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="BookingId" Type="int" Mode="In" />
+    <Parameter Name="UserId" Type="int" Mode="In" />
+  </Function>
+  <Function Name="DeleteTrain" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+  </Function>
+  <Function Name="deleteuser" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="Userid" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="PrintTicket" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="bookingId" Type="int" Mode="In" />
+  </Function>
+  <Function Name="UpdateTrainStatus" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="TrainId" Type="int" Mode="In" />
+    <Parameter Name="TrainStatus" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="UserLoginProcedure" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+    <Parameter Name="Username" Type="varchar" Mode="In" />
+    <Parameter Name="Password" Type="varchar" Mode="In" />
+  </Function>
+  <Function Name="ViewTrain" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+  <EntityContainer Name="train_reservationModelStoreContainer">
+    <EntitySet Name="Admins" EntityType="Self.Admins" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="cancelticket" EntityType="Self.cancelticket" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="Trains" EntityType="Self.Trains" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="BookedTickets" EntityType="Self.BookedTickets" store:Type="Tables" store:Schema="dbo">
+      <DefiningQuery>SELECT 
+    [BookedTickets].[BookingId] AS [BookingId], 
+    [BookedTickets].[TrainId] AS [TrainId], 
+    [BookedTickets].[trainame] AS [trainame], 
+    [BookedTickets].[UserId] AS [UserId], 
+    [BookedTickets].[totalfare] AS [totalfare], 
+    [BookedTickets].[class] AS [class], 
+    [BookedTickets].[BookingDate] AS [BookingDate], 
+    [BookedTickets].[NumberOfTickets] AS [NumberOfTickets]
+    FROM [dbo].[BookedTickets] AS [BookedTickets]</DefiningQuery>
+    </EntitySet>
+    <EntitySet Name="Users" EntityType="Self.Users" store:Type="Tables" store:Schema="dbo">
+      <DefiningQuery>SELECT 
+    [Users].[UserId] AS [UserId], 
+    [Users].[Username] AS [Username], 
+    [Users].[Password] AS [Password]
+    FROM [dbo].[Users] AS [Users]</DefiningQuery>
+    </EntitySet>
+    <AssociationSet Name="FK__BookedTic__Train__5812160E" Association="Self.FK__BookedTic__Train__5812160E">
+      <End Role="Trains" EntitySet="Trains" />
+      <End Role="BookedTickets" EntitySet="BookedTickets" />
+    </AssociationSet>
+    <AssociationSet Name="FK__canceltic__train__5AEE82B9" Association="Self.FK__canceltic__train__5AEE82B9">
+      <End Role="Trains" EntitySet="Trains" />
+      <End Role="cancelticket" EntitySet="cancelticket" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>

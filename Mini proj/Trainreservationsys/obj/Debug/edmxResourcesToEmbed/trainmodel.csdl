@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="train_reservationModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Admin">
+    <Key>
+      <PropertyRef Name="AdminId" />
+    </Key>
+    <Property Name="AdminId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Username" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+    <Property Name="Password" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+  </EntityType>
+  <EntityType Name="cancelticket">
+    <Key>
+      <PropertyRef Name="cancelid" />
+    </Key>
+    <Property Name="cancelid" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="bookid" Type="Int32" />
+    <Property Name="userid" Type="Int32" />
+    <Property Name="trainno" Type="Int32" />
+    <Property Name="refund_amt" Type="Int32" />
+    <Property Name="no_of_tickets" Type="Int32" />
+    <NavigationProperty Name="Train" Relationship="Self.FK__canceltic__train__5AEE82B9" FromRole="cancelticket" ToRole="Trains" />
+  </EntityType>
+  <EntityType Name="Train">
+    <Key>
+      <PropertyRef Name="trainid" />
+    </Key>
+    <Property Name="trainid" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="TrainName" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+    <Property Name="DepartureStation" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+    <Property Name="ArrivalStation" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+    <Property Name="FirstClassFare" Type="Decimal" Precision="10" Scale="2" />
+    <Property Name="SecondClassFare" Type="Decimal" Precision="10" Scale="2" />
+    <Property Name="SleeperClassFare" Type="Decimal" Precision="10" Scale="2" />
+    <Property Name="totalberths" Type="Int32" />
+    <Property Name="availableberths" Type="Int32" />
+    <Property Name="Status" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+    <NavigationProperty Name="canceltickets" Relationship="Self.FK__canceltic__train__5AEE82B9" FromRole="Trains" ToRole="cancelticket" />
+    <NavigationProperty Name="BookedTickets" Relationship="Self.FK__BookedTic__Train__5812160E" FromRole="Trains" ToRole="BookedTickets" />
+  </EntityType>
+  <EntityType Name="BookedTicket">
+    <Key>
+      <PropertyRef Name="BookingId" />
+      <PropertyRef Name="BookingDate" />
+      <PropertyRef Name="NumberOfTickets" />
+    </Key>
+    <Property Name="BookingId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="TrainId" Type="Int32" />
+    <Property Name="trainame" Type="String" MaxLength="30" FixedLength="false" Unicode="false" />
+    <Property Name="UserId" Type="Int32" />
+    <Property Name="totalfare" Type="Int32" />
+    <Property Name="class" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
+    <Property Name="BookingDate" Type="DateTime" Nullable="false" Precision="3" />
+    <Property Name="NumberOfTickets" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Train" Relationship="Self.FK__BookedTic__Train__5812160E" FromRole="BookedTickets" ToRole="Trains" />
+  </EntityType>
+  <EntityType Name="User">
+    <Key>
+      <PropertyRef Name="UserId" />
+      <PropertyRef Name="Username" />
+      <PropertyRef Name="Password" />
+    </Key>
+    <Property Name="UserId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Username" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+    <Property Name="Password" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+  </EntityType>
+  <Association Name="FK__canceltic__train__5AEE82B9">
+    <End Role="Trains" Type="Self.Train" Multiplicity="0..1" />
+    <End Role="cancelticket" Type="Self.cancelticket" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Trains">
+        <PropertyRef Name="trainid" />
+      </Principal>
+      <Dependent Role="cancelticket">
+        <PropertyRef Name="trainno" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__BookedTic__Train__5812160E">
+    <End Role="Trains" Type="Self.Train" Multiplicity="0..1" />
+    <End Role="BookedTickets" Type="Self.BookedTicket" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Trains">
+        <PropertyRef Name="trainid" />
+      </Principal>
+      <Dependent Role="BookedTickets">
+        <PropertyRef Name="TrainId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="train_reservationEntities" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Admins" EntityType="Self.Admin" />
+    <EntitySet Name="canceltickets" EntityType="Self.cancelticket" />
+    <EntitySet Name="Trains" EntityType="Self.Train" />
+    <EntitySet Name="BookedTickets" EntityType="Self.BookedTicket" />
+    <EntitySet Name="Users" EntityType="Self.User" />
+    <AssociationSet Name="FK__canceltic__train__5AEE82B9" Association="Self.FK__canceltic__train__5AEE82B9">
+      <End Role="Trains" EntitySet="Trains" />
+      <End Role="cancelticket" EntitySet="canceltickets" />
+    </AssociationSet>
+    <AssociationSet Name="FK__BookedTic__Train__5812160E" Association="Self.FK__BookedTic__Train__5812160E">
+      <End Role="Trains" EntitySet="Trains" />
+      <End Role="BookedTickets" EntitySet="BookedTickets" />
+    </AssociationSet>
+    <FunctionImport Name="AddTrainBasedOnStatus" ReturnType="Collection(train_reservationModel.AddTrainBasedOnStatus_Result)">
+      <Parameter Name="TrainName" Mode="In" Type="String" />
+      <Parameter Name="Departurestation" Mode="In" Type="String" />
+      <Parameter Name="arrivalstation" Mode="In" Type="String" />
+      <Parameter Name="firstclass" Mode="In" Type="String" />
+      <Parameter Name="secondclass" Mode="In" Type="String" />
+      <Parameter Name="sleeperclass" Mode="In" Type="String" />
+      <Parameter Name="totalberths" Mode="In" Type="Int32" />
+      <Parameter Name="availableberths" Mode="In" Type="Int32" />
+      <Parameter Name="TStatus" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="AddUser">
+      <Parameter Name="Username" Mode="In" Type="String" />
+      <Parameter Name="Password" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="AdminLoginProcedure" ReturnType="Collection(String)">
+      <Parameter Name="Username" Mode="In" Type="String" />
+      <Parameter Name="Password" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="BookTicket">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+      <Parameter Name="UserId" Mode="In" Type="Int32" />
+      <Parameter Name="trainname" Mode="In" Type="String" />
+      <Parameter Name="BookingDate" Mode="In" Type="DateTime" />
+      <Parameter Name="NumberOfTickets" Mode="In" Type="Int32" />
+      <Parameter Name="Class" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="BookTickets">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+      <Parameter Name="UserId" Mode="In" Type="Int32" />
+      <Parameter Name="trainname" Mode="In" Type="String" />
+      <Parameter Name="BookingDate" Mode="In" Type="DateTime" />
+      <Parameter Name="NumberOfTickets" Mode="In" Type="Int32" />
+      <Parameter Name="Class" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="BookTrainTicket">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+      <Parameter Name="Class" Mode="In" Type="String" />
+      <Parameter Name="Tname" Mode="In" Type="String" />
+      <Parameter Name="UserId" Mode="In" Type="Int32" />
+      <Parameter Name="BookingDate" Mode="In" Type="DateTime" />
+      <Parameter Name="NumberOfTickets" Mode="In" Type="Int32" />
+    </FunctionImport>
+    <FunctionImport Name="BookTrainTickets">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+      <Parameter Name="UserId" Mode="In" Type="Int32" />
+      <Parameter Name="TrainName" Mode="In" Type="String" />
+      <Parameter Name="BookingDate" Mode="In" Type="DateTime" />
+      <Parameter Name="NumberOfTickets" Mode="In" Type="Int32" />
+      <Parameter Name="Class" Mode="In" Type="String" />
+      <Parameter Name="BookingId" Mode="InOut" Type="Int32" />
+    </FunctionImport>
+    <FunctionImport Name="Cancel">
+      <Parameter Name="BookingId" Mode="In" Type="Int32" />
+      <Parameter Name="UserId" Mode="In" Type="Int32" />
+    </FunctionImport>
+    <FunctionImport Name="DeleteTrain">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+    </FunctionImport>
+    <FunctionImport Name="deleteuser">
+      <Parameter Name="Userid" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="PrintTicket" ReturnType="Collection(train_reservationModel.PrintTicket_Result)">
+      <Parameter Name="bookingId" Mode="In" Type="Int32" />
+    </FunctionImport>
+    <FunctionImport Name="UpdateTrainStatus">
+      <Parameter Name="TrainId" Mode="In" Type="Int32" />
+      <Parameter Name="TrainStatus" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="UserLoginProcedure" ReturnType="Collection(train_reservationModel.UserLoginProcedure_Result)">
+      <Parameter Name="Username" Mode="In" Type="String" />
+      <Parameter Name="Password" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="ViewTrain" ReturnType="Collection(train_reservationModel.ViewTrain_Result)" />
+  </EntityContainer>
+  <ComplexType Name="AddTrainBasedOnStatus_Result">
+    <Property Type="Int32" Name="trainid" Nullable="false" />
+    <Property Type="String" Name="TrainName" Nullable="true" MaxLength="255" />
+    <Property Type="String" Name="DepartureStation" Nullable="true" MaxLength="255" />
+    <Property Type="String" Name="ArrivalStation" Nullable="true" MaxLength="255" />
+    <Property Type="Decimal" Name="FirstClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Decimal" Name="SecondClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Decimal" Name="SleeperClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Int32" Name="totalberths" Nullable="true" />
+    <Property Type="Int32" Name="availableberths" Nullable="true" />
+    <Property Type="String" Name="Status" Nullable="true" MaxLength="50" />
+  </ComplexType>
+  <ComplexType Name="PrintTicket_Result">
+    <Property Type="Int32" Name="bookingId" Nullable="false" />
+    <Property Type="Int32" Name="trainId" Nullable="true" />
+    <Property Type="String" Name="trainame" Nullable="true" MaxLength="30" />
+    <Property Type="Int32" Name="userId" Nullable="true" />
+    <Property Type="Int32" Name="totalfare" Nullable="true" />
+    <Property Type="String" Name="class" Nullable="true" MaxLength="20" />
+    <Property Type="DateTime" Name="bookingDate" Nullable="false" Precision="23" />
+    <Property Type="Int32" Name="numberoftickets" Nullable="false" />
+  </ComplexType>
+  <ComplexType Name="UserLoginProcedure_Result">
+    <Property Type="String" Name="UserType" Nullable="true" MaxLength="10" />
+    <Property Type="Int32" Name="UserId" Nullable="true" />
+  </ComplexType>
+  <ComplexType Name="ViewTrain_Result">
+    <Property Type="Int32" Name="trainid" Nullable="false" />
+    <Property Type="String" Name="TrainName" Nullable="true" MaxLength="255" />
+    <Property Type="String" Name="DepartureStation" Nullable="true" MaxLength="255" />
+    <Property Type="String" Name="ArrivalStation" Nullable="true" MaxLength="255" />
+    <Property Type="Decimal" Name="FirstClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Decimal" Name="SecondClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Decimal" Name="SleeperClassFare" Nullable="true" Precision="10" Scale="2" />
+    <Property Type="Int32" Name="totalberths" Nullable="true" />
+    <Property Type="Int32" Name="availableberths" Nullable="true" />
+    <Property Type="String" Name="Status" Nullable="true" MaxLength="50" />
+  </ComplexType>
+</Schema>
