@@ -469,13 +469,15 @@ namespace Trainreservationsys
                 return;
             }
 
-            string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid}";
+            string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid} AND Status = 'Active'";
+
             using (SqlCommand checkCommand = new SqlCommand(query, connection))
             {
                 int count = (int)checkCommand.ExecuteScalar();
                 if (count == 0)
                 {
-                    Console.WriteLine("Train ID not found.");
+                   Console.WriteLine("Train ID not found or train is inactive.");
+                   Console.ReadKey();
                     return;
                 }
             }
@@ -483,14 +485,15 @@ namespace Trainreservationsys
             Console.Write("Enter Train Name: ");
             string trainName = Console.ReadLine();
 
-            query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName";
+            query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName AND Status = 'Active'";
             using (SqlCommand checkNameCommand = new SqlCommand(query, connection))
             {
                 checkNameCommand.Parameters.AddWithValue("@TrainName", trainName);
                 int count = (int)checkNameCommand.ExecuteScalar();
                 if (count == 0)
                 {
-                    Console.WriteLine("Train name not found.");
+                    Console.WriteLine("Train name not found or train is inactive.");
+                    Console.ReadKey();
                     return;
                 }
             }
@@ -524,7 +527,6 @@ namespace Trainreservationsys
 
             try
             {
-
                 foreach (var passengerName in passengerNames)
                 {
                     using (SqlCommand command = new SqlCommand("BookTrainTickets", connection))
@@ -549,7 +551,6 @@ namespace Trainreservationsys
                         DisplayBookedTicket(connection, bookingId, passengerNames);
                     }
                 }
-
             }
             catch (Exception ex)
             {
