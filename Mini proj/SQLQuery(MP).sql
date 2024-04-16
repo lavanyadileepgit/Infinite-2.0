@@ -210,8 +210,7 @@ BEGIN
 
     PRINT 'Ticket canceled successfully.';
 END;
-
-----------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
 CREATE OR ALTER PROCEDURE BookTrainTickets
     @TrainId INT,
     @UserId INT,
@@ -274,14 +273,21 @@ BEGIN
 
         SET @TotalFare = @TotalFare * @NumberOfTickets;
 
+        PRINT 'Passenger Names:';
+        DECLARE @PassengerIndex INT = 1;
+        WHILE @PassengerIndex <= @NumberOfTickets
+        BEGIN
+            DECLARE @PassengerName VARCHAR(255);
+            SET @PassengerName = (SELECT 'Passenger' + CAST(@PassengerIndex AS VARCHAR));
+            PRINT @PassengerName;
+
+            SET @PassengerIndex = @PassengerIndex + 1;
+        END
+
         INSERT INTO BookedTickets 
         VALUES (@TrainId, @TrainName, @UserId, @TotalFare, @Class, @BookingDate, @NumberOfTickets);
 
-        UPDATE Trains
-        SET availableberths = availableberths - @NumberOfTickets
-        WHERE TrainId = @TrainId;
-
-        SELECT @BookingId = SCOPE_IDENTITY();
+        SET @BookingId = SCOPE_IDENTITY();
 
         COMMIT TRANSACTION;
         PRINT 'Ticket booked successfully.';
@@ -290,6 +296,29 @@ BEGIN
         ROLLBACK TRANSACTION;
         PRINT 'Error booking ticket.';
     END CATCH;
+END;
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE DisplayBookedTicket
+    @BookingId INT
+AS
+BEGIN
+    SELECT
+        bt.BookingId,
+        bt.TrainId,
+        bt.TrainName,
+        bt.UserId,
+        bt.TotalFare,
+        bt.Class,
+        bt.BookingDate,
+        bt.NumberOfTickets,
+        btp.PassengerName
+    FROM
+        BookedTickets bt
+        JOIN BookedTicketPassengers btp ON bt.BookingId = btp.BookingId
+    WHERE
+        bt.BookingId = @BookingId;
 END;
 
 

@@ -460,64 +460,72 @@ namespace Trainreservationsys
                 }
             }
 
-            private static void BookTrainTickets(SqlConnection connection)
+        private static void BookTrainTickets(SqlConnection connection)
+        {
+            Console.Write("Enter Train ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int trainid))
             {
-                Console.Write("Enter Train ID: ");
-                if (!int.TryParse(Console.ReadLine(), out int trainid))
+                Console.WriteLine("Invalid Train ID format.");
+                return;
+            }
+
+            string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid}";
+            using (SqlCommand checkCommand = new SqlCommand(query, connection))
+            {
+                int count = (int)checkCommand.ExecuteScalar();
+                if (count == 0)
                 {
-                    Console.WriteLine("Invalid Train ID format.");
+                    Console.WriteLine("Train ID not found.");
                     return;
                 }
+            }
 
-                string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid}";
-                using (SqlCommand checkCommand = new SqlCommand(query, connection))
+            Console.Write("Enter Train Name: ");
+            string trainName = Console.ReadLine();
+
+            query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName";
+            using (SqlCommand checkNameCommand = new SqlCommand(query, connection))
+            {
+                checkNameCommand.Parameters.AddWithValue("@TrainName", trainName);
+                int count = (int)checkNameCommand.ExecuteScalar();
+                if (count == 0)
                 {
-                    int count = (int)checkCommand.ExecuteScalar();
-                    if (count == 0)
-                    {
-                        Console.WriteLine("Train ID not found.");
-                        Console.Read();
-                        return;
-                    }
-                }
-
-                Console.Write("Enter Train Name: ");
-                string trainName = Console.ReadLine();
-
-                query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName";
-                using (SqlCommand checkNameCommand = new SqlCommand(query, connection))
-                {
-                    checkNameCommand.Parameters.AddWithValue("@TrainName", trainName);
-                    int count = (int)checkNameCommand.ExecuteScalar();
-                    if (count == 0)
-                    {
-                        Console.WriteLine("Train name not found.");
-                        Console.Read();
-                        return;
-                    }
-                }
-
-                Console.Write("Enter user ID: ");
-                int userId;
-                if (!int.TryParse(Console.ReadLine(), out userId))
-                {
-                    Console.WriteLine("Invalid User ID format.");
+                    Console.WriteLine("Train name not found.");
                     return;
                 }
+            }
 
-                DateTime bookedDate = GetDateFromCalendar();
+            Console.Write("Enter user ID: ");
+            int userId;
+            if (!int.TryParse(Console.ReadLine(), out userId))
+            {
+                Console.WriteLine("Invalid User ID format.");
+                return;
+            }
 
-                Console.Write("Enter number of tickets: ");
-                if (!int.TryParse(Console.ReadLine(), out int numberOfTickets))
-                {
-                    Console.WriteLine("Invalid number of tickets format.");
-                    return;
-                }
+            DateTime bookedDate = GetDateFromCalendar();
 
-                Console.Write("Enter class: ");
-                string Tclass = Console.ReadLine();
+            Console.Write("Enter number of tickets: ");
+            if (!int.TryParse(Console.ReadLine(), out int numberOfTickets))
+            {
+                Console.WriteLine("Invalid number of tickets format.");
+                return;
+            }
 
-                try
+            Console.Write("Enter class: ");
+            string Tclass = Console.ReadLine();
+
+            List<string> passengerNames = new List<string>();
+            for (int i = 0; i < numberOfTickets; i++)
+            {
+                Console.Write($"Enter Passenger Name for ticket {i + 1}: ");
+                passengerNames.Add(Console.ReadLine());
+            }
+
+            try
+            {
+
+                foreach (var passengerName in passengerNames)
                 {
                     using (SqlCommand command = new SqlCommand("BookTrainTickets", connection))
                     {
@@ -525,32 +533,33 @@ namespace Trainreservationsys
 
                         command.Parameters.AddWithValue("@TrainId", trainid);
                         command.Parameters.AddWithValue("@UserId", userId);
-                        command.Parameters.AddWithValue("@trainname", trainName);
+                        command.Parameters.AddWithValue("@TrainName", trainName);
                         command.Parameters.AddWithValue("@BookingDate", bookedDate);
                         command.Parameters.AddWithValue("@NumberOfTickets", numberOfTickets);
                         command.Parameters.AddWithValue("@Class", Tclass);
-
-                        SqlParameter bookingIdParameter = new SqlParameter("@BookingId", SqlDbType.Int);
-                        bookingIdParameter.Direction = ParameterDirection.Output;
-                        command.Parameters.Add(bookingIdParameter);
+                        command.Parameters.AddWithValue("@BookingId", SqlDbType.Int).Direction = ParameterDirection.Output;
 
                         command.ExecuteNonQuery();
 
-                        int bookingId = (int)bookingIdParameter.Value;
-                        Console.WriteLine("Booking ID: " + bookingId);
-                        Console.WriteLine("Ticket booked successfully!");
+                        int bookingId = Convert.ToInt32(command.Parameters["@BookingId"].Value);
+                        Console.WriteLine();
+
+                        Console.WriteLine($"Ticket for {passengerName} booked successfully!");
+                        Console.WriteLine();
+                        DisplayBookedTicket(connection, bookingId, passengerNames);
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error booking ticket: {ex.Message}");
-                }
-                Console.Read();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error booking ticket: {ex.Message}");
+            }
+            Console.Read();
+        
 
 
-
-
-                DateTime GetDateFromCalendar()
+        DateTime GetDateFromCalendar()
                 {
                     DateTime currentDate = DateTime.Now;
                     int currentDay = currentDate.Day;
@@ -634,7 +643,42 @@ namespace Trainreservationsys
                 }
 
             }
-            static void ViewTrain(SqlConnection connection)
+        private static void DisplayBookedTicket(SqlConnection connection, int bookingId, List<string> passengerNames)
+        {
+            using (SqlCommand command = new SqlCommand("DisplayBookedTicket", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@BookingId", bookingId);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+
+                        Console.WriteLine($"Booking ID: {reader["BookingId"]}");
+                        Console.WriteLine($"Train ID: {reader["TrainId"]}");
+                        Console.WriteLine($"Train Name: {reader["Trainame"]}");
+                        Console.WriteLine($"User ID: {reader["UserId"]}");
+                        Console.WriteLine($"Booking Date: {reader["BookingDate"]}");
+                        Console.WriteLine("Passenger Names:");
+                       /* foreach (var passengerName in passengerNames)
+                        {
+                            Console.WriteLine($"- {passengerName}");
+                        }*/
+                        Console.WriteLine($"Number of Tickets: {reader["NumberOfTickets"]}");
+                        Console.WriteLine($"Class: {reader["Class"]}");
+                        
+                    }
+                    else
+                    {
+                        Console.WriteLine("Booking not found.");
+                    }
+                }
+            }
+        }
+
+
+        static void ViewTrain(SqlConnection connection)
             {
                 try
                 {
