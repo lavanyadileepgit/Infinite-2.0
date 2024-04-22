@@ -15,12 +15,11 @@ namespace CodeChallange1
             }
 
             protected void Button1_Click(object sender, EventArgs e)
-            {
-                
-                int clickCount = int.Parse(HiddenField1.Value) + 1;
-                HiddenField1.Value = clickCount.ToString();
-                Response.Write($"Button clicked {clickCount} times. <br/> Have a nice day....");
-            }
+        {
+
+           
+            
         }
+    }
     }
 
