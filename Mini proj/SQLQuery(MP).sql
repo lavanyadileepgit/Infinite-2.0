@@ -64,14 +64,13 @@ CREATE TABLE BookedTickets (
     FOREIGN KEY (TrainId) REFERENCES Trains(TrainId),
 );
 
+drop table bookedtickets
 
-INSERT INTO BookedTickets
-VALUES
-    (10001, 'Venad Express', 1, 10000, '2nd class', '2024-04-12 08:00:00', 2),
-    (10002, 'Cheran Express', 2, 2232, 'sleeper class', '2024-04-23 08:00:00', 4),
-    (10003, 'Chennai Express', 3, 3600, '1st class', '2024-04-15 08:00:00', 3),
-    (10001, 'Kerala Express', 4, 10000, '2nd class', '2024-04-10 08:00:00', 2),
-    (10002, 'Island Express', 5, 558, 'sleeper class', '2024-04-30 08:00:00', 1);
+ALTER TABLE BookedTickets
+ADD trainname VARCHAR(30);
+
+
+
 
 CREATE TABLE cancelticket (
     cancelid INT PRIMARY KEY IDENTITY,
@@ -114,23 +113,31 @@ BEGIN
     END
 END;
 ---------------------------------------------------------------------------------------------------------------------------------------------------
-CREATE OR ALTER PROCEDURE UpdateTrainStatus
+CREATE OR ALTER PROCEDURE UpdateTrainStatusAndFare
     @TrainId INT,
-    @TrainStatus VARCHAR(20)
+    @TrainStatus VARCHAR(20),
+    @FirstClassFare DECIMAL(10,2),
+    @SecondClassFare DECIMAL(10,2),
+    @SleeperClassFare DECIMAL(10,2)
 AS
 BEGIN
     IF @TrainStatus IN ('active', 'inactive')
     BEGIN
         UPDATE Trains
-        SET status = @TrainStatus
+        SET Status = @TrainStatus,
+            FirstClassFare = @FirstClassFare,
+            SecondClassFare = @SecondClassFare,
+            SleeperClassFare = @SleeperClassFare
         WHERE TrainId = @TrainId;
-        PRINT 'Train status updated successfully.';
+
+        PRINT 'Train status and fare updated successfully.';
     END
     ELSE
     BEGIN
         PRINT 'Invalid train status. Please specify either active or inactive.';
     END
 END;
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 CREATE OR ALTER PROCEDURE DeleteTrain
     @TrainId INT
@@ -180,15 +187,17 @@ BEGIN
 END
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------
-CREATE OR ALTER PROCEDURE Cancel
+CREATE OR ALTER PROCEDURE cancel
     @BookingId INT,
     @UserId INT
 AS
 BEGIN
     DECLARE @TrainId INT;
     DECLARE @NumberOfTickets INT;
+    DECLARE @FarePerTicket INT;
+    DECLARE @Class VARCHAR(20); -- Assuming class column in BookedTickets is VARCHAR(20)
 
-    SELECT TOP 1 @TrainId = TrainId, @NumberOfTickets = NumberOfTickets
+    SELECT TOP 1 @TrainId = TrainId, @NumberOfTickets = NumberOfTickets, @Class = Class
     FROM BookedTickets
     WHERE BookingId = @BookingId AND UserId = @UserId;
 
@@ -198,6 +207,30 @@ BEGIN
         RETURN;
     END;
 
+    IF @Class = '1st Class'
+    BEGIN
+        SELECT @FarePerTicket = FirstClassFare
+        FROM Trains
+        WHERE TrainId = @TrainId;
+    END
+    ELSE IF @Class = '2nd Class'
+    BEGIN
+        SELECT @FarePerTicket = SecondClassFare
+        FROM Trains
+        WHERE TrainId = @TrainId;
+    END
+    ELSE IF @Class = 'Sleeper Class'
+    BEGIN
+        SELECT @FarePerTicket = SleeperClassFare
+        FROM Trains
+        WHERE TrainId = @TrainId;
+    END
+    ELSE
+    BEGIN
+        PRINT 'Invalid class.';
+        RETURN;
+    END
+
     DELETE FROM BookedTickets
     WHERE BookingId = @BookingId AND UserId = @UserId;
 
@@ -205,33 +238,35 @@ BEGIN
     SET AvailableBerths = AvailableBerths + @NumberOfTickets
     WHERE TrainId = @TrainId;
 
-    INSERT INTO cancelticket --(BookingId, UserId, TrainId, Refund_Amt, no_of_tickets)
-    VALUES (@BookingId, @UserId, @TrainId, (@NumberOfTickets * 100), @NumberOfTickets);
+    INSERT INTO cancelticket (BookId, UserId, Trainno, Refund_Amt, no_of_tickets)
+    VALUES (@BookingId, @UserId, @TrainId, (@FarePerTicket * @NumberOfTickets / 2), @NumberOfTickets);
 
     PRINT 'Ticket canceled successfully.';
 END;
------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------
 CREATE OR ALTER PROCEDURE BookTrainTickets
     @TrainId INT,
     @UserId INT,
-    @TrainName VARCHAR(255),
     @BookingDate DATETIME,
     @NumberOfTickets INT,
     @Class VARCHAR(20),
     @BookingId INT OUTPUT -- Output parameter for BookingId
 AS
 BEGIN
+    DECLARE @TrainName VARCHAR(255);
     DECLARE @TrainExists INT;
     DECLARE @UserExists INT;
     DECLARE @UserLoggedInId INT = 1; -- Example value, replace with actual logged-in user ID
 
-    SELECT @TrainExists = COUNT(*)
+    -- Fetch the TrainName based on the TrainId
+    SELECT @TrainName = TrainName
     FROM Trains
-    WHERE TrainId = @TrainId AND TrainName = @TrainName;
+    WHERE TrainId = @TrainId;
 
-    IF @TrainExists = 0
+    IF @TrainName IS NULL
     BEGIN
-        PRINT 'Train ID or Train Name not found.';
+        PRINT 'Train ID not found.';
         RETURN;
     END;
 
@@ -272,14 +307,17 @@ BEGIN
         END;
 
         SET @TotalFare = @TotalFare * @NumberOfTickets;
+		 UPDATE Trains
+        SET AvailableBerths = (AvailableBerths - @NumberOfTickets)
+        WHERE TrainId = @TrainId;
 
-        PRINT 'Passenger Names:';
         DECLARE @PassengerIndex INT = 1;
         WHILE @PassengerIndex <= @NumberOfTickets
         BEGIN
             DECLARE @PassengerName VARCHAR(255);
-            SET @PassengerName = (SELECT 'Passenger' + CAST(@PassengerIndex AS VARCHAR));
-            PRINT @PassengerName;
+            SET @PassengerName = 'Passenger' + CAST(@PassengerIndex AS VARCHAR);
+
+            -- INSERT INTO Passenger table or do other operations as needed
 
             SET @PassengerIndex = @PassengerIndex + 1;
         END
@@ -288,6 +326,9 @@ BEGIN
         VALUES (@TrainId, @TrainName, @UserId, @TotalFare, @Class, @BookingDate, @NumberOfTickets);
 
         SET @BookingId = SCOPE_IDENTITY();
+
+        -- Reduce available berths
+       
 
         COMMIT TRANSACTION;
         PRINT 'Ticket booked successfully.';
@@ -307,16 +348,15 @@ BEGIN
     SELECT
         bt.BookingId,
         bt.TrainId,
-        bt.Trainame,
+        t.TrainName, -- Corrected to fetch TrainName from Trains table
         bt.UserId,
         bt.TotalFare,
         bt.Class,
         bt.BookingDate,
         bt.NumberOfTickets
-       -- btp.PassengerName
     FROM
         BookedTickets bt
-        JOIN BookedTickets btp ON bt.BookingId = btp.BookingId
+        JOIN Trains t ON bt.TrainId = t.TrainId -- Join with Trains table to get TrainName
     WHERE
         bt.BookingId = @BookingId;
 END;
@@ -385,6 +425,19 @@ AS
 BEGIN
     SELECT * FROM trains 
 END;
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE viewBtrain
+AS
+BEGIN
+    SELECT * FROM BookedTickets;
+END;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE OR ALTER PROCEDURE viewctrain
+AS
+BEGIN
+    SELECT * FROM cancelticket;
+END;
+
 
 ====================================================================================================================================================
 select * from trains

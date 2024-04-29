@@ -45,24 +45,25 @@ namespace Trainreservationsys
                         foreach (var frame in frames)
                         {
                             Console.Clear();
-                            if (i % 2 == 0)
+                            if (i % 3 == 0)
                             {
                                 Console.ForegroundColor = ConsoleColor.White;
                             }
                             else
                             {
-                                Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.ForegroundColor = ConsoleColor.Yellow;
                             }
                             Console.WriteLine(frame);
-                            Thread.Sleep(500); 
+                            Thread.Sleep(100); 
                         }
                     }
 
                     Console.ResetColor();
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                    Console.WriteLine("---------------------------------------------------------------");
+                
+                   // Console.WriteLine("---------------------------------------------------------------");
                     Console.WriteLine("Select Option:");
-                    Console.WriteLine("1. Admin Login");
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.WriteLine("1. Admin Login");
                     Console.WriteLine("2. User Login");
                     Console.Write("Enter your choice: ");
                     Console.ResetColor();
@@ -77,7 +78,9 @@ namespace Trainreservationsys
                             UserLogin(connection);
                             break;
                         default:
-                            Console.WriteLine("Invalid choice. Please try again.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid choice. Please try again.");
+                        Console.ResetColor();
                             Console.ReadKey(); 
                             Main(args);
                             break;
@@ -112,74 +115,169 @@ namespace Trainreservationsys
                         string userType = dataTable.Rows[0]["UserType"].ToString();
                         if (userType == "Admin")
                         {
-                            Console.WriteLine("Admin logged in successfully.");
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Admin logged in successfully.");
+                        Console.ResetColor();
                             Console.ReadLine();
                             AdminOptionsLoop(connection);
                         }
                         else
                         {
-                            Console.WriteLine("Invalid admin login credentials.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid admin login credentials.");
+                        Console.ResetColor();
+                        Console.ReadLine();
+                        AdminLogin(connection);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid admin login credentials.");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid admin login credentials.");
+                    Console.ResetColor();
                     }
                 }
 
                 Console.ReadKey(); 
             }
 
-            static void AdminOptionsLoop(SqlConnection connection)
+        static void AdminOptionsLoop(SqlConnection connection)
+        {
+            bool isAdmin = true;
+
+            while (isAdmin)
             {
-                bool isAdmin = true;
+                Console.Clear();
+                PrintHeader("Admin Options");
 
-                while (isAdmin)
+                Console.WriteLine("Select Option:");
+                Console.WriteLine("1. Add Train");
+                Console.WriteLine("2. Update Train");
+                Console.WriteLine("3. Delete Train");
+                Console.WriteLine("4. Delete User");
+                Console.WriteLine("5. View Train");
+                Console.WriteLine("6. View Booking Details");
+                Console.WriteLine("7. View Cancel Details");
+                Console.WriteLine("8. Exit");
+                Console.Write("Enter your choice: ");
+                string choice = Console.ReadLine();
+
+                switch (choice)
                 {
-                    Console.Clear();
-                    PrintHeader("Admin Options");
+                    case "1":
+                        AddTrain(connection);
+                        break;
+                    case "2":
+                        UpdateTrain(connection);
+                        break;
+                    case "3":
+                        DeleteTrain(connection);
+                        break;
+                    case "4":
+                        DeleteUser(connection);
+                        break;
+                    case "5":
+                        ViewTrains(connection);
+                        break;
+                    case "6":
+                        ViewBookedTrain(connection);
+                        break;
+                    case "7":
+                        viewcanceltrain(connection);
+                        break;
+                    case "8":
+                        isAdmin = false;
+                        Console.WriteLine("Logging out.");
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid choice.");
+                        Console.ResetColor();
+                        break;
+                }
 
-                    Console.WriteLine("Select Option:");
-                    Console.WriteLine("1. Add Train");
-                    Console.WriteLine("2. Update Train");
-                    Console.WriteLine("3. Delete Train");
-                    Console.WriteLine("4. Delete User");
-                    Console.WriteLine("5. View Train");
-                    Console.WriteLine("6. Exit");
-                    Console.Write("Enter your choice: ");
-                    string choice = Console.ReadLine();
-
-                    switch (choice)
-                    {
-                        case "1":
-                            AddTrain(connection);
-                            break;
-                        case "2":
-                            UpdateTrain(connection);
-                            break;
-                        case "3":
-                            DeleteTrain(connection);
-                            break;
-                        case "4":
-                            DeleteUser(connection);
-                            break;
-                        case "5":
-                            ViewTrains(connection);
-                            break;
-                        case "6":
-                            isAdmin = false; 
-                            Console.WriteLine("Logged out.");
-                            break;
-                        default:
-                            Console.WriteLine("Invalid choice.");
-                            break;
-                    }
-
-                    Console.ReadLine();
+                if (!isAdmin)
+                {
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    Main(new string[] { }); // Restart the main program
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.ReadKey();
                 }
             }
+        }
 
-            static void AddTrain(SqlConnection connection)
+        static void viewcanceltrain(SqlConnection connection)
+        {
+            try
+            {
+                using (SqlCommand command = new SqlCommand("viewctrain", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        Console.WriteLine("Cancelled Tickets:");
+                        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+                        Console.WriteLine("{0,-10} {1,-10} {2,-10} {3,-15} {4,-15} {5,-10}", "Cancel ID", "Booking ID", "User ID", "Train Number", "Refund Amount", "Number of Tickets");
+                        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+
+                        while (reader.Read())
+                        {
+                            Console.WriteLine("{0,-10} {1,-10} {2,-10} {3,-15} {4,-15} {5,-10}", reader["cancelid"], reader["bookid"], reader["userid"], reader["trainno"], reader["refund_amt"], reader["no_of_tickets"]);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error viewing cancelled tickets: {ex.Message}");
+                Console.ResetColor();
+            }
+        }
+
+
+        static void ViewBookedTrain(SqlConnection connection)
+        {
+            try
+            {
+                using (SqlCommand command = new SqlCommand("viewBtrain", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        Console.WriteLine("Booked Tickets:");
+                        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+                        Console.WriteLine("{0,-10} {1,-10} {2,-20} {3,-10} {4,-10} {5,-15} {6,-25} {7,-10}", "Booking ID", "Train ID", "Train Name", "User ID", "Total Fare", "Class", "Booking Date", "Number of Tickets");
+                        Console.WriteLine("------------------------------------------------------------------------------------------------------------------");
+
+                        while (reader.Read())
+                        {
+                            Console.WriteLine("{0,-10} {1,-10} {2,-20} {3,-10} {4,-10} {5,-15} {6,-25} {7,-10}", reader["BookingId"], reader["TrainId"], reader["trainame"], reader["UserId"], reader["TotalFare"], reader["Class"], reader["BookingDate"], reader["NumberOfTickets"]);
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error viewing booked tickets: {ex.Message}");
+                Console.ResetColor();
+            }
+        }
+
+
+
+
+
+
+        static void AddTrain(SqlConnection connection)
             {
                 try
                 {
@@ -213,7 +311,9 @@ namespace Trainreservationsys
 
                     if (status != "active" && status != "inactive")
                     {
-                        Console.WriteLine("Invalid status. Status must be 'active' or 'inactive'.");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid status. Status must be 'active' or 'inactive'.");
+                    Console.ResetColor();
                         return;
                     }
 
@@ -231,100 +331,232 @@ namespace Trainreservationsys
                         command.Parameters.AddWithValue("@TStatus", status);
 
                         command.ExecuteNonQuery();
-                        Console.WriteLine("Train added successfully.");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Train added successfully.");
+                    Console.ResetColor();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
-                    Console.WriteLine($"Error adding train: {ex.Message}");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error adding train");
+                Console.ResetColor();
                 }
 
                 Console.ReadLine(); 
             }
 
 
-            static void UpdateTrain(SqlConnection connection)
+        static void UpdateTrain(SqlConnection connection)
+        {
+            try
             {
-                try
-                {
-                    Console.Write("Enter Train ID to update: ");
-                    int trainId = int.Parse(Console.ReadLine());
-                    Console.Write("Enter New Train Status (active/inactive): ");
-                    string status = Console.ReadLine();
+                Console.Write("Enter Train ID to update: ");
+                int trainId = int.Parse(Console.ReadLine());
 
-                    if (status != "active" && status != "inactive")
+                // Check if the train is already active
+                using (SqlCommand checkCommand = new SqlCommand("SELECT Status FROM Trains WHERE trainid = @TrainId", connection))
+                {
+                    checkCommand.Parameters.AddWithValue("@TrainId", trainId);
+                    string currentStatus = checkCommand.ExecuteScalar()?.ToString();
+
+                    if (currentStatus == "active")
                     {
-                        Console.WriteLine("Invalid status. Status must be 'active' or 'inactive'.");
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("Train is already in active state.");
+                        Console.ResetColor();
+                        Console.Write("Do you want to update the fares? (yes/no): ");
+                        string updateFares = Console.ReadLine();
+
+                        if (updateFares.ToLower() == "yes")
+                        {
+                            Console.Write("Enter New First Class Fare: ");
+                            decimal firstClassFare = decimal.Parse(Console.ReadLine());
+
+                            Console.Write("Enter New Second Class Fare: ");
+                            decimal secondClassFare = decimal.Parse(Console.ReadLine());
+
+                            Console.Write("Enter New Sleeper Class Fare: ");
+                            decimal sleeperClassFare = decimal.Parse(Console.ReadLine());
+
+                            using (SqlCommand updateFaresCommand = new SqlCommand("UPDATE Trains SET FirstClassFare = @FirstClassFare, SecondClassFare = @SecondClassFare, SleeperClassFare = @SleeperClassFare WHERE TrainId = @TrainId", connection))
+                            {
+                                updateFaresCommand.Parameters.AddWithValue("@TrainId", trainId);
+                                updateFaresCommand.Parameters.AddWithValue("@FirstClassFare", firstClassFare);
+                                updateFaresCommand.Parameters.AddWithValue("@SecondClassFare", secondClassFare);
+                                updateFaresCommand.Parameters.AddWithValue("@SleeperClassFare", sleeperClassFare);
+                                updateFaresCommand.ExecuteNonQuery();
+                            }
+
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Fares updated successfully.");
+                            Console.ResetColor();
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Fares not updated.");
+                            Console.ResetColor();
+                        }
+
+                        Console.ReadLine();
                         return;
                     }
-
-                    using (SqlCommand command = new SqlCommand("UpdateTrainStatus", connection))
+                    else if (currentStatus == "inactive")
                     {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@TrainId", trainId);
-                        command.Parameters.AddWithValue("@TrainStatus", status);
-                        Console.WriteLine("Train updated successfully.");
-                        Console.ReadLine();
-                        command.ExecuteNonQuery();
+                        Console.WriteLine("Train is currently inactive.");
+
+                        Console.Write("Do you want to activate the train? (yes/no): ");
+                        string activateTrain = Console.ReadLine();
+
+                        if (activateTrain.ToLower() == "yes")
+                        {
+                            using (SqlCommand activateCommand = new SqlCommand("UPDATE Trains SET Status = 'active' WHERE TrainId = @TrainId", connection))
+                            {
+                                activateCommand.Parameters.AddWithValue("@TrainId", trainId);
+                                activateCommand.ExecuteNonQuery();
+                            }
+
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Train activated successfully.");
+                            Console.ResetColor();
+
+                            // Ask if the admin wants to update the class fares
+                            Console.Write("Do you want to update the fares? (yes/no): ");
+                            string updateFares = Console.ReadLine();
+
+                            if (updateFares.ToLower() == "yes")
+                            {
+                                Console.Write("Enter New First Class Fare: ");
+                                decimal firstClassFare = decimal.Parse(Console.ReadLine());
+
+                                Console.Write("Enter New Second Class Fare: ");
+                                decimal secondClassFare = decimal.Parse(Console.ReadLine());
+
+                                Console.Write("Enter New Sleeper Class Fare: ");
+                                decimal sleeperClassFare = decimal.Parse(Console.ReadLine());
+
+                                using (SqlCommand updateFaresCommand = new SqlCommand("UPDATE Trains SET FirstClassFare = @FirstClassFare, SecondClassFare = @SecondClassFare, SleeperClassFare = @SleeperClassFare WHERE TrainId = @TrainId", connection))
+                                {
+                                    updateFaresCommand.Parameters.AddWithValue("@TrainId", trainId);
+                                    updateFaresCommand.Parameters.AddWithValue("@FirstClassFare", firstClassFare);
+                                    updateFaresCommand.Parameters.AddWithValue("@SecondClassFare", secondClassFare);
+                                    updateFaresCommand.Parameters.AddWithValue("@SleeperClassFare", sleeperClassFare);
+                                    updateFaresCommand.ExecuteNonQuery();
+                                }
+
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Fares updated successfully.");
+                                Console.ResetColor();
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("Fares not updated.");
+                                Console.ResetColor();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Train not activated.");
+                            return;
+                        }
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error updating train: {ex.Message}");
-                }
-
-                Console.ReadKey(); 
+            }
+            catch (Exception)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error updating train");
+                Console.ResetColor();
             }
 
-            static void DeleteTrain(SqlConnection connection)
+            Console.ReadKey();
+        }
+
+
+
+
+
+
+        static void DeleteTrain(SqlConnection connection)
+        {
+            try
             {
-                try
-                {
-                    Console.Write("Enter Train ID to delete: ");
-                    int trainId = int.Parse(Console.ReadLine());
+                Console.Write("Enter Train ID to delete: ");
+                int trainId = int.Parse(Console.ReadLine());
 
-                    using (SqlCommand command = new SqlCommand("DeleteTrain", connection))
+                using (SqlCommand command = new SqlCommand("DeleteTrain", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@TrainId", trainId);
+                    int rowsAffected = command.ExecuteNonQuery();
+
+                    if (rowsAffected == 0)
                     {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@TrainId", trainId);
-                        Console.WriteLine("Train deleted successfully.");
-                        Console.ReadLine();
-                        command.ExecuteNonQuery();
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid train ID. Train not found.");
+                        Console.ResetColor();
                     }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deleting train: {ex.Message}");
-                }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Train deleted successfully.");
+                        Console.ResetColor();
+                    }
 
+                    Console.ReadLine();
+                }
+            }
+            catch (Exception)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error deleting train");
+                Console.ResetColor();
                 Console.ReadLine();
             }
+        }
 
-            static void DeleteUser(SqlConnection connection)
+
+        static void DeleteUser(SqlConnection connection)
+        {
+            try
             {
-                try
-                {
-                    Console.Write("Enter User ID to delete: ");
-                    int userId = int.Parse(Console.ReadLine());
+                Console.Write("Enter User ID to delete: ");
+                int userId = int.Parse(Console.ReadLine());
 
-                    using (SqlCommand command = new SqlCommand("DeleteUser", connection))
+                using (SqlCommand command = new SqlCommand("DeleteUser", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@UserId", userId);
+                    int rowsAffected = command.ExecuteNonQuery();
+
+                    if (rowsAffected == 0)
                     {
-                        command.CommandType = CommandType.StoredProcedure;
-                        command.Parameters.AddWithValue("@UserId", userId);
-                        Console.WriteLine("User deleted successfully.");
-                        Console.ReadLine();
-                        command.ExecuteNonQuery();
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid user ID. User not found.");
+                        Console.ResetColor();
                     }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deleting user: {ex.Message}");
-                }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("User deleted successfully.");
+                        Console.ResetColor();
+                    }
 
-                Console.ReadLine(); 
+                    Console.ReadLine();
+                }
             }
+            catch (Exception)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error deleting user");
+                Console.ReadLine();
+                Console.ResetColor();
+            }
+        }
 
-            static void UserLogin(SqlConnection connection)
+        static void UserLogin(SqlConnection connection)
             {
                 bool continueLogin = true;
                 bool newUserCreated = false; 
@@ -364,17 +596,25 @@ namespace Trainreservationsys
                                     if (userType == "User")
                                     {
                                         int userId = Convert.ToInt32(dataTable.Rows[0]["UserId"]);
-                                        Console.WriteLine("User logged in successfully with UserId: " + userId);
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("User logged in successfully with UserId: " + userId);
+                                    Console.ReadLine();
+                                    Console.ResetColor();
                                         while (UserOptions(connection)) ;
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Invalid user login credentials.");
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("Invalid user login credentials.");
+                                    Console.ResetColor();
                                     }
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Invalid user login credentials.");
+                                Console.ForegroundColor = ConsoleColor.Red;
+
+                                Console.WriteLine("Invalid user login credentials.");
+                                Console.ResetColor();
                                 }
                             }
                         }
@@ -393,18 +633,24 @@ namespace Trainreservationsys
                                     command.Parameters.AddWithValue("@Username", newUsername);
                                     command.Parameters.AddWithValue("@Password", newPassword);
                                     command.ExecuteNonQuery();
-                                    Console.WriteLine("User account created successfully.");
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("User account created successfully.");
+                                Console.ResetColor();
                                     newUserCreated = true;                                 }
 
                             }
-                            catch (Exception ex)
+                            catch (Exception )
                             {
-                                Console.WriteLine("Error creating user account: " + ex.Message);
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Error creating user account: ");
+                            Console.ResetColor();
                             }
                         }
                         else
                         {
-                            Console.WriteLine("Invalid input. Please enter 'Y' or 'N'.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Invalid input. Please enter 'Y' or 'N'.");
+                        Console.ResetColor();
                         }
                     }
                     else
@@ -450,49 +696,78 @@ namespace Trainreservationsys
                         CancelTicket(connection);
                         return true;
                     case "4":
-                        Console.WriteLine("Logging out...");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Logging out...");
+                    Console.ResetColor();
                         return false;
 
 
                     default:
-                        Console.WriteLine("Invalid choice.");
+                   Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Invalid choice.");
+                   Console.ResetColor();
                         return true;
                 }
             }
-
-        private static void BookTrainTickets(SqlConnection connection)
+        private static void DisplayActiveTrains(SqlConnection connection)
         {
-            Console.Write("Enter Train ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int trainid))
+            string query = "SELECT * FROM Trains WHERE Status = 'Active'";
+            using (SqlCommand command = new SqlCommand(query, connection))
             {
-                Console.WriteLine("Invalid Train ID format.");
-                return;
-            }
-
-            string query = $"SELECT COUNT(1) FROM Trains WHERE TrainId = {trainid} AND Status = 'Active'";
-
-            using (SqlCommand checkCommand = new SqlCommand(query, connection))
-            {
-                int count = (int)checkCommand.ExecuteScalar();
-                if (count == 0)
+                using (SqlDataReader reader = command.ExecuteReader())
                 {
-                   Console.WriteLine("Train ID not found or train is inactive.");
-                   Console.ReadKey();
-                    return;
+                    Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+                    Console.WriteLine("{0,-10} {1,-20} {2,-20} {3,-20} {4,-15} {5,-15} {6,-15} {7,-15} {8,-15} {9,-10}", "Train ID", "Train Name", "Departure Station", "Arrival Station", "First Class Fare", "Second Class Fare", "Sleeper Class Fare", "Total Berths", "Available Berths", "Status");
+                    Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+                    while (reader.Read())
+                    {
+                        Console.WriteLine("{0,-10} {1,-20} {2,-20} {3,-20} {4,-15} {5,-15} {6,-15} {7,-15} {8,-15} {9,-10}",
+                            reader["trainid"],
+                            reader["TrainName"],
+                            reader["DepartureStation"],
+                            reader["ArrivalStation"],
+                            reader["FirstClassFare"],
+                            reader["SecondClassFare"],
+                            reader["SleeperClassFare"],
+                            reader["totalberths"],
+                            reader["availableberths"],
+                            reader["Status"]);
+                    }
                 }
             }
 
-            Console.Write("Enter Train Name: ");
-            string trainName = Console.ReadLine();
+            Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+        }
 
-            query = $"SELECT COUNT(1) FROM Trains WHERE TrainName = @TrainName AND Status = 'Active'";
-            using (SqlCommand checkNameCommand = new SqlCommand(query, connection))
+
+
+        private static void BookTrainTickets(SqlConnection connection)
+        {
+            DisplayActiveTrains(connection);
+
+            Console.Write("Enter Train ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int trainid))
             {
-                checkNameCommand.Parameters.AddWithValue("@TrainName", trainName);
-                int count = (int)checkNameCommand.ExecuteScalar();
-                if (count == 0)
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid Train ID format.");
+                Console.ReadLine();
+                Console.ResetColor();
+                return;
+            }
+
+            string trainName;
+            string query = $"SELECT TrainName FROM Trains WHERE TrainId = {trainid} AND Status = 'Active'";
+            using (SqlCommand getNameCommand = new SqlCommand(query, connection))
+            {
+                trainName = getNameCommand.ExecuteScalar()?.ToString();
+                if (string.IsNullOrEmpty(trainName))
                 {
-                    Console.WriteLine("Train name not found or train is inactive.");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Train ID not found or train is inactive.");
+                    Console.ResetColor();
                     Console.ReadKey();
                     return;
                 }
@@ -502,7 +777,10 @@ namespace Trainreservationsys
             int userId;
             if (!int.TryParse(Console.ReadLine(), out userId))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Invalid User ID format.");
+                Console.ResetColor();
+                Console.ReadLine();
                 return;
             }
 
@@ -511,7 +789,10 @@ namespace Trainreservationsys
             Console.Write("Enter number of tickets: ");
             if (!int.TryParse(Console.ReadLine(), out int numberOfTickets))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Invalid number of tickets format.");
+                Console.ResetColor();
+                Console.ReadLine();
                 return;
             }
 
@@ -535,116 +816,132 @@ namespace Trainreservationsys
 
                         command.Parameters.AddWithValue("@TrainId", trainid);
                         command.Parameters.AddWithValue("@UserId", userId);
-                        command.Parameters.AddWithValue("@TrainName", trainName);
                         command.Parameters.AddWithValue("@BookingDate", bookedDate);
                         command.Parameters.AddWithValue("@NumberOfTickets", numberOfTickets);
                         command.Parameters.AddWithValue("@Class", Tclass);
-                        command.Parameters.AddWithValue("@BookingId", SqlDbType.Int).Direction = ParameterDirection.Output;
+                        command.Parameters.Add("@BookingId", SqlDbType.Int).Direction = ParameterDirection.Output;
 
                         command.ExecuteNonQuery();
 
                         int bookingId = Convert.ToInt32(command.Parameters["@BookingId"].Value);
                         Console.WriteLine();
-
-                        Console.WriteLine($"Ticket for {passengerName} booked successfully!");
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        DisplayBookedTicket(connection, bookingId, passengerName);
+                        Console.WriteLine($"Ticket for {passengerName} booked successfully! Booking ID: {bookingId}");
+                        Console.ResetColor();
                         Console.WriteLine();
-                        DisplayBookedTicket(connection, bookingId, passengerNames);
                     }
                 }
             }
             catch (Exception ex)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Error booking ticket: {ex.Message}");
+                Console.ResetColor();
             }
-            Console.Read();
+
+            Console.ReadLine();
         
+            DateTime GetDateFromCalendar()
+            {
+                DateTime currentDate = DateTime.Now;
+                int currentDay = currentDate.Day;
+                int currentMonth = currentDate.Month;
+                int currentYear = currentDate.Year;
 
-
-        DateTime GetDateFromCalendar()
+                while (true)
                 {
-                    DateTime currentDate = DateTime.Now;
-                    int currentDay = currentDate.Day;
-                    int currentMonth = currentDate.Month;
-                    int currentYear = currentDate.Year;
+                    Console.Clear();
+                    Console.WriteLine($"Selected month: {currentDate.ToString("MMMM yyyy")}");
+                    Console.WriteLine("Sun Mon Tue Wed Thu Fri Sat");
 
-                    while (true)
+                    int startingDay = (int)new DateTime(currentYear, currentMonth, 1).DayOfWeek;
+                    int totalDays = DateTime.DaysInMonth(currentYear, currentMonth);
+                    int currentDayOfMonth = 1;
+
+                    for (int i = 0; i < startingDay; i++)
                     {
-                        Console.Clear();
-                        Console.WriteLine($"Selected month: {currentDate.ToString("MMMM yyyy")}");
-                        Console.WriteLine("Sun Mon Tue Wed Thu Fri Sat");
+                        Console.Write("    ");
+                    }
 
-                        int startingDay = (int)new DateTime(currentYear, currentMonth, 1).DayOfWeek;
-                        int totalDays = DateTime.DaysInMonth(currentYear, currentMonth);
-                        int currentDayOfMonth = 1;
-
-                        for (int i = 0; i < startingDay; i++)
+                    while (currentDayOfMonth <= totalDays)
+                    {
+                        for (int i = startingDay; i < 7 && currentDayOfMonth <= totalDays; i++)
                         {
-                            Console.Write("    ");
-                        }
-
-                        while (currentDayOfMonth <= totalDays)
-                        {
-                            for (int i = startingDay; i < 7 && currentDayOfMonth <= totalDays; i++)
+                            if (currentDayOfMonth == currentDay && currentMonth == currentDate.Month && currentYear == currentDate.Year)
                             {
-                                if (currentDayOfMonth == currentDay && currentMonth == currentDate.Month && currentYear == currentDate.Year)
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Green;
-                                }
-                                Console.Write($"{currentDayOfMonth,3}");
-                                if (currentDayOfMonth < 10)
-                                {
-                                    Console.Write(" ");
-                                }
-                                Console.ResetColor();
-                                currentDayOfMonth++;
+                                Console.ForegroundColor = ConsoleColor.Green;
                             }
-                            Console.WriteLine();
-                            startingDay = 0;
+                            Console.Write($"{currentDayOfMonth,3}");
+                            if (currentDayOfMonth < 10)
+                            {
+                                Console.Write(" ");
+                            }
+                            Console.ResetColor();
+                            currentDayOfMonth++;
                         }
+                        Console.WriteLine();
+                        startingDay = 0;
+                    }
 
-                        Console.WriteLine("\nUse arrow keys to navigate the calendar. Press Enter to select the date.");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("\nUse arrow keys ie up and down arroy to switch bw months , left and right arrow tos witch bw dates. Press Enter to select the date.");
+                    Console.ResetColor();
 
-                        ConsoleKeyInfo key = Console.ReadKey(true);
-                        switch (key.Key)
-                        {
-                            case ConsoleKey.LeftArrow:
-                                currentDay--;
-                                if (currentDay < 1)
-                                {
-                                    currentDate = currentDate.AddMonths(-1);
-                                    currentDay = DateTime.DaysInMonth(currentDate.Year, currentDate.Month);
-                                    currentMonth = currentDate.Month;
-                                    currentYear = currentDate.Year;
-                                }
-                                break;
-                            case ConsoleKey.RightArrow:
-                                currentDay++;
-                                if (currentDay > DateTime.DaysInMonth(currentYear, currentMonth))
-                                {
-                                    currentDate = currentDate.AddMonths(1);
-                                    currentDay = 1;
-                                    currentMonth = currentDate.Month;
-                                    currentYear = currentDate.Year;
-                                }
-                                break;
-                            case ConsoleKey.UpArrow:
+                    ConsoleKeyInfo key = Console.ReadKey(true);
+                    switch (key.Key)
+                    {
+                        case ConsoleKey.LeftArrow:
+                            currentDay--;
+                            if (currentDay < 1)
+                            {
                                 currentDate = currentDate.AddMonths(-1);
+                                currentDay = DateTime.DaysInMonth(currentDate.Year, currentDate.Month);
                                 currentMonth = currentDate.Month;
                                 currentYear = currentDate.Year;
-                                break;
-                            case ConsoleKey.DownArrow:
+                            }
+                            break;
+                        case ConsoleKey.RightArrow:
+                            currentDay++;
+                            if (currentDay > DateTime.DaysInMonth(currentYear, currentMonth))
+                            {
                                 currentDate = currentDate.AddMonths(1);
+                                currentDay = 1;
                                 currentMonth = currentDate.Month;
                                 currentYear = currentDate.Year;
-                                break;
-                            case ConsoleKey.Enter:
-                                return currentDate; 
-                        }
+                            }
+                            break;
+                        case ConsoleKey.UpArrow:
+                            currentDate = currentDate.AddMonths(-1);
+                            currentMonth = currentDate.Month;
+                            currentYear = currentDate.Year;
+                            break;
+                        case ConsoleKey.DownArrow:
+                            currentDate = currentDate.AddMonths(1);
+                            currentMonth = currentDate.Month;
+                            currentYear = currentDate.Year;
+                            break;
+                        case ConsoleKey.Enter:
+                            DateTime selectedDate = new DateTime(currentYear, currentMonth, currentDay);
+                            if (selectedDate.Date >= currentDate.Date)
+                            {
+                                return selectedDate;
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Please select a date from today or in the future.");
+                                Console.Read();
+                                Console.ResetColor();
+                            }
+                            break;
                     }
                 }
-
             }
-        private static void DisplayBookedTicket(SqlConnection connection, int bookingId, List<string> passengerNames)
+
+
+        }
+        private static void DisplayBookedTicket(SqlConnection connection, int bookingId, string passengerNames)
         {
             using (SqlCommand command = new SqlCommand("DisplayBookedTicket", connection))
             {
@@ -655,28 +952,26 @@ namespace Trainreservationsys
                 {
                     if (reader.Read())
                     {
-
                         Console.WriteLine($"Booking ID: {reader["BookingId"]}");
                         Console.WriteLine($"Train ID: {reader["TrainId"]}");
-                        Console.WriteLine($"Train Name: {reader["Trainame"]}");
+                        Console.WriteLine($"Train Name: {reader["TrainName"]}");
                         Console.WriteLine($"User ID: {reader["UserId"]}");
                         Console.WriteLine($"Booking Date: {reader["BookingDate"]}");
                         Console.WriteLine("Passenger Names:");
-                       /* foreach (var passengerName in passengerNames)
-                        {
-                            Console.WriteLine($"- {passengerName}");
-                        }*/
+                        Console.WriteLine($"{passengerNames}");
                         Console.WriteLine($"Number of Tickets: {reader["NumberOfTickets"]}");
                         Console.WriteLine($"Class: {reader["Class"]}");
-                        
                     }
                     else
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Booking not found.");
+                        Console.ResetColor();
                     }
                 }
             }
         }
+
         static void ViewTrains(SqlConnection connection)
         {
             try
@@ -712,9 +1007,11 @@ namespace Trainreservationsys
                 Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
             }
-            catch (Exception ex)
+            catch (Exception )
             {
-                Console.WriteLine("Error viewing trains: " + ex.Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error viewing trains " );
+                Console.ResetColor();
             }
             Console.Read();
         }
@@ -753,9 +1050,11 @@ namespace Trainreservationsys
                     Console.WriteLine("Press any key to continue...");
                     Console.ReadKey();
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
-                    Console.WriteLine("Error viewing trains: " + ex.Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error viewing trains" );
+                Console.ResetColor();
                 }
                 Console.Read();
             }
@@ -778,19 +1077,25 @@ namespace Trainreservationsys
                         int rowsAffected = command.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
-                            Console.WriteLine("Ticket canceled successfully.");
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Ticket canceled successfully.");
+                        Console.ResetColor();
                             Console.Read();
                         }
                         else
                         {
-                            Console.WriteLine("Failed to cancel ticket. Please check the Booking ID.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Failed to cancel ticket. Please check the Booking ID.");
+                        Console.ResetColor();
                             Console.Read();
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
-                    Console.WriteLine($"Error canceling ticket: {ex.Message}");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error canceling ticket");
+                Console.ResetColor();
                 }
             }
 
